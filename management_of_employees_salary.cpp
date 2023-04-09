@@ -62,6 +62,8 @@ class SalaryConfig
     int base_salary, salary_per_hour, salary_per_extra_hour, official_working_hours, tax_percentage;
 
 public:
+    SalaryConfig(Level level, int base_salary, int salary_per_hour, int salaty_per_extra_hour,
+                 int official_working_hours, int tax_percentage);
 };
 
 Employee::Employee(int _id, string _name, int _age, Level _level, vector<WorkingHour> _working_hours)
@@ -72,6 +74,10 @@ Team::Team(int _team_id, int _team_head_id, vector<int> _member_ids,
            int _bonus_min_working_hours, float _bonus_working_hours_max_variance)
     : team_id(_team_id), team_head_id(_team_head_id), member_ids(_member_ids),
       bonus_min_working_hours(_bonus_min_working_hours), bonus_working_hours_max_variance(_bonus_working_hours_max_variance) {}
+SalaryConfig::SalaryConfig(Level _level, int _base_salary, int _salary_per_hour, int _salaty_per_extra_hour,
+                           int _official_working_hours, int _tax_percentage)
+    : level(_level), base_salary(_base_salary), salary_per_hour(_salary_per_hour), salary_per_extra_hour(_salaty_per_extra_hour),
+      official_working_hours(_official_working_hours), tax_percentage(_tax_percentage) {}
 
 string delete_bachslash_r_if_it_was_at_the_end_of_the_word(string word)
 {
@@ -172,6 +178,23 @@ vector<Team> get_teams(const string teams_file_directory)
     teams_csv.close();
     return teams;
 }
+SalaryConfig convert_csv_line_to_salary_config(string csv_line)
+{
+    vector<string> csv_fields = split_line_of_string_by_specific_char(csv_line, comma);
+    return SalaryConfig(convert_string_to_Level[csv_fields[0]], stoi(csv_fields[1]), stoi(csv_fields[2]),
+                        stoi(csv_fields[3]), stoi(csv_fields[4]), stoi(csv_fields[5]));
+}
+vector<SalaryConfig> get_salary_configs(const string salary_configs_file_directory)
+{
+    vector<SalaryConfig> salary_configs;
+    ifstream salary_configs_csv(salary_configs_file_directory);
+    skip_header_row_of_csv(salary_configs_csv);
+    string line;
+    while (getline(salary_configs_csv, line))
+        salary_configs.push_back(convert_csv_line_to_salary_config(line));
+    salary_configs_csv.close();
+    return salary_configs;
+}
 
 int main(int argc, char *argv[])
 {
@@ -179,5 +202,5 @@ int main(int argc, char *argv[])
     vector<Employee> employees = get_employees_and_working_hours(files_directory + employees_file_name,
                                                                  files_directory + working_hours_file_name);
     vector<Team> teams = get_teams(files_directory + teams_file_name);
-    vector<SalaryConfig> salary_configs(sizeof(Level));
+    vector<SalaryConfig> salary_configs = get_salary_configs(files_directory + salary_configs_file_name);
 }
