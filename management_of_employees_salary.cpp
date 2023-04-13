@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 #include <string>
+#include <cmath>
 
 using namespace std;
 
@@ -33,6 +34,7 @@ class WorkingHour
     pair<int, int> working_invertal;
 
 public:
+    pair <int, int> get_working_invertal(){return working_invertal;}
     WorkingHour(int day, pair<int, int> working_invertal);
 };
 class Employee
@@ -44,36 +46,56 @@ class Employee
     vector<WorkingHour> working_hours;
 
 public:
+    int get_id(){return id;}
+    string get_name(){return name;}
+    Level get_level(){return level;}
     Employee(int id, string name, int age, Level level, vector<WorkingHour> working_hours);
+    int find_total_working_hour();
 };
 class Team
 {
-    int team_id, team_head_id;
+    int team_id;
+    int team_head_id;
     vector<int> member_ids;
     int bonus_min_working_hours;
     float bonus_working_hours_max_variance;
 
 public:
+    //int get_bonus(){return bonus;} /*fix here*/
     Team(int team_id, int team_head_id, vector<int> member_ids, int bonus_min_working_hours, float bonus_working_hours_max_variance);
+    bool is_id_in_team(int id)
+    {
+        if(find(member_ids.begin(), member_ids.end(), id) != member_ids.end())
+            return true;
+        return false;
+        }
 };
 class SalaryConfig
 {
     Level level;
-    int base_salary, salary_per_hour, salary_per_extra_hour, official_working_hours, tax_percentage;
+    int base_salary;
+    int salary_per_hour;
+    int salary_per_extra_hour;
+    int official_working_hours;
+    int tax_percentage;
 
 public:
     SalaryConfig(Level level, int base_salary, int salary_per_hour, int salaty_per_extra_hour,
                  int official_working_hours, int tax_percentage);
+    int find_total_salary(int working_hours, int bonus);
 };
 
 Employee::Employee(int _id, string _name, int _age, Level _level, vector<WorkingHour> _working_hours)
     : id(_id), name(_name), age(_age), level(_level), working_hours(_working_hours) {}
+
 WorkingHour::WorkingHour(int _day, pair<int, int> _working_invertal)
     : day(_day), working_invertal(_working_invertal) {}
+
 Team::Team(int _team_id, int _team_head_id, vector<int> _member_ids,
            int _bonus_min_working_hours, float _bonus_working_hours_max_variance)
     : team_id(_team_id), team_head_id(_team_head_id), member_ids(_member_ids),
       bonus_min_working_hours(_bonus_min_working_hours), bonus_working_hours_max_variance(_bonus_working_hours_max_variance) {}
+
 SalaryConfig::SalaryConfig(Level _level, int _base_salary, int _salary_per_hour, int _salaty_per_extra_hour,
                            int _official_working_hours, int _tax_percentage)
     : level(_level), base_salary(_base_salary), salary_per_hour(_salary_per_hour), salary_per_extra_hour(_salaty_per_extra_hour),
@@ -194,6 +216,50 @@ vector<SalaryConfig> get_salary_configs(const string salary_configs_file_directo
         salary_configs.push_back(convert_csv_line_to_salary_config(line));
     salary_configs_csv.close();
     return salary_configs;
+}
+
+int SalaryConfig :: find_total_salary(int working_hours, int bonus)
+{
+    float salary = 0;
+    salary += base_salary;
+    if (working_hours >= official_working_hours)
+    {
+        int extra_hours = working_hours - official_working_hours;
+        salary += official_working_hours * salary_per_hour + extra_hours * salary_per_extra_hour;
+    }
+    else
+        salary += working_hours * salary_per_hour;
+    salary += salary * bonus / 100;
+    salary = round(salary);
+    return salary;
+}
+
+int Employee :: find_total_working_hour()
+{
+    int total_working_hour = 0;
+    for(auto working_hour : working_hours)
+    {
+        total_working_hour += working_hour.get_working_invertal().second - working_hour.get_working_invertal().first;
+    }
+    return total_working_hour;
+}
+
+void report_salaries(const vector<Employee>& employees, vector<SalaryConfig>& salary_configs, const vector<Team>& teams)
+{
+    for (auto employee : employees)
+    {
+        int bonus = 0; /*fix here*/
+        // for (auto team :teams)
+        // {
+        //     if (team.is_id_in_team())
+
+        // }
+        cout << "ID : " << employee.get_id() << endl;
+        cout << "Name : " << employee.get_name() << endl;
+        cout << "Total Working Hours : " << employee.find_total_working_hour() << endl;
+        cout << "Total Earning : " << salary_configs[employee.get_level()].find_total_salary(employee.find_total_working_hour(), bonus) << endl;
+        cout << "---" << endl;
+    }
 }
 
 int main(int argc, char *argv[])
