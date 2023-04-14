@@ -31,6 +31,9 @@ map<string, Level> convert_string_to_Level = {{"junior", JUNIOR},
                                               {"senior", SENIOR},
                                               {"team_lead", TEAM_LEAD}};
 
+class Employee;
+class SalaryConfig;
+
 class WorkingHour
 {
     int day;
@@ -51,9 +54,20 @@ class Team
     float bonus_working_hours_max_variance;
 
 public:
+    Team(int team_id, int team_head_id, vector<int> member_ids, int bonus_min_working_hours, float bonus_working_hours_max_variance);
+    int team_members_count(){return member_ids.size();}
+    void print_members_total_earning(vector<Employee>& employees, vector<SalaryConfig>& salary_configs, vector<Team>& teams);
+    int find_total_working_hours(vector<Employee>& employees);
+    bool is_id_this_teams_id(int id)
+    {
+        if (id == team_id)
+            return true;
+        else
+            return false;
+    }
+    void print_head_info(vector<Employee>& employees);
     int get_team_id() { return team_id; }
     int get_bonus_percentage() { return bonus_percentage; }
-    Team(int team_id, int team_head_id, vector<int> member_ids, int bonus_min_working_hours, float bonus_working_hours_max_variance);
     bool is_id_in_team(int id)
     {
         if (find(member_ids.begin(), member_ids.end(), id) != member_ids.end())
@@ -89,13 +103,16 @@ class Employee
     float bonus = 0.0;
 
 public:
+    Employee(int id, string name, int age, Level level, vector<WorkingHour> working_hours);
+    // void print_name(){cout << name;}
+    bool is_id_for_this_employee(int employee_id);
     int get_age() { return age; }
     int get_id() { return id; }
     string get_name() { return name; }
     Level get_level() { return level; }
-    Employee(int id, string name, int age, Level level, vector<WorkingHour> working_hours);
     int calculate_total_working_hour();
     int calculate_absent_days();
+    int calculate_total_earing_straight(vector<SalaryConfig> &salary_configs){return calculate_total_earing(salary_configs[level].calculate_tax(salary, bonus));}
     void report_salary_short(vector<SalaryConfig> &salary_configs);
     void preparing_for_report_salary(vector<Team> &teams, vector<SalaryConfig> &salary_configs);
     int calculate_total_earing(float tax);
@@ -105,7 +122,7 @@ public:
         return _salary;
     }
     float calculate_and_set_bonus(int bonus_percentage);
-    int find_team_index(vector<Team> &teams);
+    int find_emoloyees_team_index(vector<Team> &teams);
     void report_salary_long(vector<SalaryConfig> &salary_configs, int team_id);
     string level_to_string(Level level);
     int give_team_id(vector<Team> teams);
@@ -247,13 +264,13 @@ vector<SalaryConfig> get_salary_configs(const string salary_configs_file_directo
 int SalaryConfig::calculate_tax(float salary, int bonus)
 {
     salary += salary * bonus / 100;
-    float tax = salary * tax_percentage;
+    float tax = salary * tax_percentage / 100;
     return round(tax);
 }
 // int SalaryConfig::calculate_total_earing(float salary, int bonus)
 // {
 //     salary += salary * bonus / 100;
-//     salary -= salary * tax_percentage; //////////////////***************************************غلط
+//     salary -= salary * tax_percentage; //////////////////***************************************غلط /*be namoos dibag kardam fahmidam ye taghsim bar sad nadare*/
 //     return round(salary);
 // }
 
@@ -290,7 +307,7 @@ int Employee::calculate_total_working_hour()
     return total_working_hour;
 }
 
-int Employee::find_team_index(vector<Team> &teams)
+int Employee::find_emoloyees_team_index(vector<Team> &teams)
 {
     for (int i = 0; i < teams.size(); i++)
         if (teams[i].is_id_in_team(id))
@@ -353,7 +370,7 @@ void report_salaries(const vector<Employee> &employees, vector<Team> &teams, vec
 void Employee::preparing_for_report_salary(vector<Team> &teams, vector<SalaryConfig> &salary_configs)
 {
     salary = salary_configs[level].calculate_salary(calculate_total_working_hour());
-    bonus = calculate_and_set_bonus(teams[find_team_index(teams)].get_bonus_percentage());
+    bonus = calculate_and_set_bonus(teams[find_emoloyees_team_index(teams)].get_bonus_percentage());
 }
 
 int find_employee_index(int id, vector<Employee> &employees)
@@ -389,7 +406,7 @@ string Employee::level_to_string(Level level)
 //         cout << "EMPLOYEE_NOT_FOUND" << endl;
 //         return;
 //     }
-//     int team_index = find_team_index(employee_id, teams);
+//     int team_index = find_emoloyees_team_index(employee_id, teams);
 //     cout << "ID : " << employees[employee_index].get_id() << endl;
 //     cout << "Name : " << employees[employee_id].get_name() << endl;
 //     cout << "Age : " << employees[employee_index].get_age() << endl;
@@ -432,7 +449,7 @@ void Employee::report_salary_long(vector<SalaryConfig> &salary_configs, int team
 
 int Employee::give_team_id(vector<Team> teams)
 {
-    int team_index = find_team_index(teams);
+    int team_index = find_emoloyees_team_index(teams);
     if (team_index == NOT_FOUND)
         return NOT_FOUND;
     else
@@ -453,6 +470,85 @@ void report_employee_salary(vector<Employee> &employees, vector<Team> &teams, ve
     employees[employee_index].report_salary_long(salary_configs, employees[employee_index].give_team_id(teams));
 }
 
+bool Employee:: is_id_for_this_employee(int employee_id)
+{
+    if (id == employee_id)
+        return true;
+    else
+        return false;
+}
+
+void Team :: print_head_info(vector<Employee>& employees)
+{
+    cout << "Head ID : " << team_head_id << endl;
+    for (auto employee : employees)
+    {
+        if (employee.is_id_for_this_employee(team_head_id))
+            cout << "Name : " << employee.get_name() << endl;
+    }
+}
+
+int find_team_index(int team_id, vector<Team>& teams)
+{
+    for (int i = 0; i < teams.size(); i++)
+        if (teams[i].is_id_this_teams_id(team_id))
+            return i;
+    return NOT_FOUND;
+}
+
+int Team :: find_total_working_hours(vector<Employee>& employees)
+{
+    int total_working_hours = 0;
+    for(auto member_id : member_ids)
+    {
+        int employee_index = find_employee_index(member_id, employees);
+        total_working_hours += employees[employee_index].calculate_total_working_hour();
+    }
+    return total_working_hours;
+}
+
+void Team :: print_members_total_earning(vector<Employee>& employees, vector<SalaryConfig>& salary_configs, vector<Team>& teams)
+{
+    for(auto member_id : member_ids)
+    {
+        int employee_index = find_employee_index(member_id, employees);
+        cout << "Member ID : " << member_id << endl;
+        employees[employee_index].preparing_for_report_salary(teams, salary_configs);
+        cout << "Total Earning : " << employees[employee_index].calculate_total_earing_straight(salary_configs) << endl;
+        cout << "---" << endl;
+    } 
+}
+
+void report_team_salary(vector<Employee>& employees, vector<SalaryConfig>& salary_configs, vector<Team>& teams)
+{
+    int team_id;
+    cin >> team_id;
+    int team_index = find_team_index(team_id, teams);
+    if (team_index == NOT_FOUND)
+    {
+        cout << "TEAM_NOT_FOUND" << endl;
+        return;
+    }
+    cout << "ID : " << team_id << endl;
+    teams[team_index].print_head_info(employees);
+    int total_working_hours = teams[team_index].find_total_working_hours(employees);
+    cout << "Team Total Working Hours : " << total_working_hours << endl;
+    cout << "Average Member Working Hours : " << total_working_hours / teams[team_index].team_members_count() << endl;
+    teams[team_index].print_members_total_earning(employees, salary_configs, teams);
+
+    // if (team.is_id_this_teams_id(team_id))
+    // {
+    // }
+    // else if (team.get_team_id() == teams[teams.size() - 1].get_team_id())
+    // {
+    //     cout << "TEAM_NOT_FOUND" << endl;
+    //     return;
+    // }
+
+
+
+}
+
 void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConfig> salary_configs)
 {
     string order;
@@ -461,6 +557,8 @@ void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConf
             report_salaries(employees, teams, salary_configs);
         else if (order == "report_employee_salary")
             report_employee_salary(employees, teams, salary_configs);
+        else if (order == "report_team_salary")
+            report_team_salary(employees, salary_configs, teams);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
