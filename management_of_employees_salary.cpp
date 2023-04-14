@@ -110,6 +110,7 @@ public:
     int calculate_tax(float salary, int bonus);
     float calculate_salary(int working_hours);
     int get_tax_percentage() { return tax_percentage; }
+    void show_details();
 };
 class Employee
 {
@@ -501,11 +502,11 @@ bool Employee:: is_id_for_this_employee(int employee_id)
 
 void Team :: print_head_info(vector<Employee>& employees)
 {
-    cout << "Head ID : " << team_head_id << endl;
+    cout << "Head ID: " << team_head_id << endl;
     for (auto employee : employees)
     {
         if (employee.is_id_for_this_employee(team_head_id))
-            cout << "Head Name : " << employee.get_name() << endl;
+            cout << "Head Name: " << employee.get_name() << endl;
     }
 }
 
@@ -533,9 +534,9 @@ void Team :: print_members_total_earning(vector<Employee>& employees, vector<Sal
     for(auto member_id : member_ids)
     {
         int employee_index = find_employee_index(member_id, employees);
-        cout << "Member ID : " << member_id << endl;
+        cout << "Member ID: " << member_id << endl;
         employees[employee_index].preparing_for_report_salary(teams, salary_configs);
-        cout << "Total Earning : " << employees[employee_index].calculate_total_earing_straight(salary_configs) << endl;
+        cout << "Total Earning: " << employees[employee_index].calculate_total_earing_straight(salary_configs) << endl;
         cout << "---" << endl;
     } 
 }
@@ -553,8 +554,8 @@ void report_team_salary(vector<Employee>& employees, vector<SalaryConfig>& salar
     cout << "ID : " << team_id << endl;
     teams[team_index].print_head_info(employees);
     int total_working_hours = teams[team_index].find_total_working_hours(employees);
-    cout << "Team Total Working Hours : " << total_working_hours << endl;
-    cout << "Average Member Working Hours : " << total_working_hours / teams[team_index].team_members_count() << endl;
+    cout << "Team Total Working Hours: " << total_working_hours << endl;
+    cout << "Average Member Working Hours: " << total_working_hours / teams[team_index].team_members_count() << endl;
     teams[team_index].print_members_total_earning(employees, salary_configs, teams);
 
     // if (team.is_id_this_teams_id(team_id))
@@ -637,14 +638,14 @@ vector<pair<int, float>> find_min_by_second_of_pair(vector<pair<int, float>> all
     return min_members_list;
 }
 
-bool is_start_and_finish_month_valid(int start_day, int finish_day)
+bool is_start_and_finish_month_invalid(int start_day, int finish_day)
 {
     if (start_day < START_OF_MONTH || start_day > END_OF_MONTH || finish_day < START_OF_MONTH || finish_day > END_OF_MONTH || start_day > finish_day)
         return true;
     return false;
 }
 
-bool is_start_and_finish_hour_valid(int start_hour, int finish_hour)
+bool is_start_and_finish_hour_invalid(int start_hour, int finish_hour)
 {
     if (start_hour < START_OF_DAY || start_hour > END_OF_DAY || finish_hour < START_OF_DAY || finish_hour > END_OF_DAY || start_hour > finish_hour)
         return true;
@@ -656,7 +657,7 @@ void report_total_hours_per_day(vector<Employee>& employees)
     int start_day;
     int finish_day;
     cin >> start_day >> finish_day;
-    if (is_start_and_finish_month_valid(start_day, finish_day))
+    if (is_start_and_finish_month_invalid(start_day, finish_day))
     {
         cout << "INVALID_ARGUMENTS" << endl;
         return;
@@ -708,7 +709,7 @@ void report_employee_per_hour(vector<Employee>& employees)
     int start_hour;
     int finish_hour;
     cin >> start_hour >> finish_hour;
-    if (is_start_and_finish_hour_valid(start_hour, finish_hour))
+    if (is_start_and_finish_hour_invalid(start_hour, finish_hour))
     {
         cout << "INVALID_ARGUMENTS" <<endl;
         return;
@@ -726,6 +727,36 @@ void report_employee_per_hour(vector<Employee>& employees)
     cout << endl;
 }
 
+void SalaryConfig :: show_details()
+{
+    cout << "Base Salary: " << base_salary << endl;
+    cout << "Salary Per Hour: " << salary_per_hour << endl;
+    cout << "Salary Per Extra Hour: " << salary_per_extra_hour << endl;
+    cout << "Official Working Hours: " << official_working_hours << endl;
+    cout << "Tax: " << tax_percentage << endl;
+}
+
+bool is_level_valid(string level)
+{
+    if (level == "junior" || level == "expert" || level == "senior" || level == "team_lead")
+        return true;
+    return false;
+}
+
+void show_salary_config(vector<SalaryConfig>& salary_configs)
+{
+    string str_level;
+    cin >> str_level;
+    if (!(is_level_valid(str_level)))
+    {
+        cout << "INVALID_LEVEL" << endl;
+        return;
+    }
+    Level level = convert_string_to_Level[str_level];
+    salary_configs[level].show_details();
+    return;
+}
+
 void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConfig> salary_configs)
 {
     string order;
@@ -740,6 +771,8 @@ void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConf
             report_total_hours_per_day(employees);
         else if (order == "report_employee_per_hour")
             report_employee_per_hour(employees);
+        else if (order == "show_salary_config")
+            show_salary_config(salary_configs);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
