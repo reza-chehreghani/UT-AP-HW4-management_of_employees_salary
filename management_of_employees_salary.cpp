@@ -40,9 +40,16 @@ class WorkingHour
     pair<int, int> working_invertal;
 
 public:
+    WorkingHour(int day, pair<int, int> working_invertal);
     int get_day() { return day; }
     int calculate_lenght_of_working_invertal() { return (working_invertal.second - working_invertal.first); }
-    WorkingHour(int day, pair<int, int> working_invertal);
+    bool is_day_this_day(int _day)
+    {
+        if (_day == day)
+            return true;
+        else
+            return false;
+    }
 };
 class Team
 {
@@ -126,6 +133,7 @@ public:
     void report_salary_long(vector<SalaryConfig> &salary_configs, int team_id);
     string level_to_string(Level level);
     int give_team_id(vector<Team> teams);
+    int find_working_hours_in_a_day(int day);
 };
 
 Employee::Employee(int _id, string _name, int _age, Level _level, vector<WorkingHour> _working_hours)
@@ -544,9 +552,94 @@ void report_team_salary(vector<Employee>& employees, vector<SalaryConfig>& salar
     //     cout << "TEAM_NOT_FOUND" << endl;
     //     return;
     // }
+}
 
+ int Employee :: find_working_hours_in_a_day(int day)
+ {
+    int total_hours = 0;
+    for(auto working_hour : working_hours)
+        if (working_hour.is_day_this_day(day))
+            total_hours += working_hour.calculate_lenght_of_working_invertal();
+    return total_hours;
+ }
 
+vector<pair<int, int>> print_days_total_hour(int start_day, int finish_day, vector<Employee>& employees)
+{
+    vector<pair<int, int>> each_day_total_hours;
+    for (int day = start_day; day <= finish_day; day++)
+    {
+        pair<int, int> this_day;
+        int total_hours = 0;
+        for (auto employee : employees)
+            total_hours += employee.find_working_hours_in_a_day(day);
+        this_day.first = day;
+        this_day.second = total_hours;
+        each_day_total_hours.push_back(this_day);
+        cout << "Day #" << this_day.first << ": " << this_day.second << endl;
+    }
+    cout << "---" << endl;
+    return each_day_total_hours;
 
+}
+
+vector<pair<int, int>> find_most_hours_days(vector<pair<int, int>> all_days)
+{
+    vector<pair<int, int>> most_hours_days;
+    if (all_days.size() == 0)
+        return all_days;
+    pair<int, int> most_hour_day = all_days[0];
+    most_hours_days.push_back(most_hour_day);
+    for(int i = 1; i < all_days.size(); i++)
+    {
+        if (all_days[i].second == most_hour_day.second)
+            most_hours_days.push_back(all_days[i]);
+        else if (all_days[i].second > most_hour_day.second)
+        {
+            most_hours_days.clear();
+            most_hours_days.push_back(all_days[i]);
+            most_hour_day = all_days[i];
+        }
+    }
+    return most_hours_days;
+}
+
+vector<pair<int, int>> find_least_hours_days(vector<pair<int, int>> all_days)
+{
+    vector<pair<int, int>> least_hours_days;
+    if (all_days.size() == 0)
+        return all_days;
+    pair<int, int> least_hour_day = all_days[0];
+    least_hours_days.push_back(least_hour_day);
+    for(int i = 1; i < all_days.size(); i++)
+    {
+        if (all_days[i].second == least_hour_day.second)
+            least_hours_days.push_back(all_days[i]);
+        else if (all_days[i].second < least_hour_day.second)
+        {
+            least_hours_days.clear();
+            least_hours_days.push_back(all_days[i]);
+            least_hour_day = all_days[i];
+        }
+    }
+    return least_hours_days;
+}
+
+void report_total_hours_per_day(vector<Employee>& employees)
+{
+    int start_day;
+    int finish_day;
+    cin >> start_day >> finish_day;
+    vector<pair<int, int>> each_day_total_hours = print_days_total_hour(start_day, finish_day, employees);
+    vector<pair<int, int>> most_hours_days = find_most_hours_days(each_day_total_hours);
+    cout << "Day(s) with Max Working Hours: ";
+    for (auto day : most_hours_days)
+        cout << day.first << " ";
+    cout << endl;
+    vector<pair<int, int>> least_hours_days = find_least_hours_days(each_day_total_hours);
+    cout << "Day(s) with Min Working Hours: ";
+    for (auto day : least_hours_days)
+        cout << day.first << " ";
+    cout << endl;
 }
 
 void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConfig> salary_configs)
@@ -559,6 +652,8 @@ void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConf
             report_employee_salary(employees, teams, salary_configs);
         else if (order == "report_team_salary")
             report_team_salary(employees, salary_configs, teams);
+        else if (order == "report_total_hours_per_day")
+            report_total_hours_per_day(employees);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
