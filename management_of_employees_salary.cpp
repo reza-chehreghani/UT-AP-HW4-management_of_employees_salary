@@ -111,6 +111,11 @@ public:
     float calculate_salary(int working_hours);
     int get_tax_percentage() { return tax_percentage; }
     void show_details();
+    void change_base_salary(int new_base_salary){base_salary = new_base_salary;}
+    void change_salary_per_hour(int new_salary_per_hour){salary_per_hour = new_salary_per_hour;}
+    void change_salary_per_extra_hour(int new_salary_per_extra_hour){salary_per_extra_hour = new_salary_per_extra_hour;}
+    void change_official_working_hour(int new_official_working_hour){official_working_hours = new_official_working_hour;}
+    void change_tax(int new_tax){tax_percentage = new_tax;}
 };
 class Employee
 {
@@ -757,7 +762,49 @@ void show_salary_config(vector<SalaryConfig>& salary_configs)
     return;
 }
 
-void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConfig> salary_configs)
+bool should_be_changed(string argument)
+{
+    if (argument != "-")
+        return true;
+    return false;
+}
+
+void update_arguments(SalaryConfig& salary_config)
+{
+    string new_base_salary;
+    string new_salary_per_hour;
+    string new_salary_per_extra_hour;
+    string new_official_working_hour;
+    string new_tax;
+    cin >> new_base_salary >> new_salary_per_hour >> new_salary_per_extra_hour >> new_official_working_hour >> new_tax;
+    if (should_be_changed(new_base_salary))
+        salary_config.change_base_salary(stoi(new_base_salary));
+    if (should_be_changed(new_salary_per_hour))
+        salary_config.change_salary_per_hour(stoi(new_salary_per_hour));
+    if (should_be_changed(new_salary_per_extra_hour))
+        salary_config.change_salary_per_extra_hour(stoi(new_salary_per_extra_hour));
+    if (should_be_changed(new_official_working_hour))
+        salary_config.change_official_working_hour(stoi(new_official_working_hour));
+    if (should_be_changed(new_tax))
+        salary_config.change_tax(stoi(new_tax));
+    cout << "OK" << endl;
+}
+
+void update_salary_config(vector<SalaryConfig>& salary_configs)
+{
+    string str_level;
+    cin >> str_level;
+    if (!(is_level_valid(str_level)))
+    {
+        cout << "INVALID_LEVEL" << endl;
+        return;
+    }
+    Level level = convert_string_to_Level[str_level];
+    update_arguments(salary_configs[level]);
+
+}
+
+void get_order(vector<Employee>& employees, vector<Team>& teams, vector<SalaryConfig>& salary_configs)
 {
     string order;
     while (cin >> order)
@@ -773,6 +820,8 @@ void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConf
             report_employee_per_hour(employees);
         else if (order == "show_salary_config")
             show_salary_config(salary_configs);
+        else if (order == "update_salary_config")
+            update_salary_config(salary_configs);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
