@@ -43,15 +43,15 @@ class SalaryConfig;
 class WorkingHour
 {
     int day;
-    pair<int, int> working_invertal;
+    pair<int, int> working_interval;
 
 public:
     WorkingHour(int day, pair<int, int> working_invertal);
     int get_day() { return day; }
-    int calculate_lenght_of_working_invertal() { return (working_invertal.second - working_invertal.first); }
+    int calculate_lenght_of_working_invertal() { return (working_interval.second - working_interval.first); }
     bool is_time_between_invertal(int time)
     {
-        if (time >= working_invertal.first && (time + 1) <= working_invertal.second)
+        if (time >= working_interval.first && (time + 1) <= working_interval.second)
             return true;
         return false;
     }
@@ -61,6 +61,17 @@ public:
             return true;
         else
             return false;
+    }
+    bool does_working_interval_interfere(int new_day, int new_start_period, int new_finish_period)
+    {
+        if (day == new_day)
+        {
+            if ((new_start_period >= working_interval.first && new_start_period < working_interval.second) || 
+                (new_finish_period <= working_interval.second && new_finish_period > working_interval.first) ||
+                (new_start_period < working_interval.first && new_finish_period > working_interval.second))
+                return true;
+        }
+        return false;
     }
 };
 class Team
@@ -153,13 +164,15 @@ public:
     int give_team_id(vector<Team> teams);
     int find_working_hours_in_a_day(int day);
     int find_work_in_a_perid_day_count(int start_of_period);
+    void add_working_hours(int day, int start_period, int finish_period);
+    bool is_new_working_interval_invalid(int day, int start_period, int finish_period);
 };
 
 Employee::Employee(int _id, string _name, int _age, Level _level, vector<WorkingHour> _working_hours)
     : id(_id), name(_name), age(_age), level(_level), working_hours(_working_hours) {}
 
 WorkingHour::WorkingHour(int _day, pair<int, int> _working_invertal)
-    : day(_day), working_invertal(_working_invertal) {}
+    : day(_day), working_interval(_working_invertal) {}
 
 Team::Team(int _team_id, int _team_head_id, vector<int> _member_ids,
            int _bonus_min_working_hours, float _bonus_working_hours_max_variance)
@@ -645,14 +658,14 @@ vector<pair<int, float>> find_min_by_second_of_pair(vector<pair<int, float>> all
 
 bool is_start_and_finish_month_invalid(int start_day, int finish_day)
 {
-    if (start_day < START_OF_MONTH || start_day > END_OF_MONTH || finish_day < START_OF_MONTH || finish_day > END_OF_MONTH || start_day > finish_day)
+    if (start_day < START_OF_MONTH || start_day > END_OF_MONTH || finish_day < START_OF_MONTH || finish_day > END_OF_MONTH || start_day >= finish_day)
         return true;
     return false;
 }
 
 bool is_start_and_finish_hour_invalid(int start_hour, int finish_hour)
 {
-    if (start_hour < START_OF_DAY || start_hour > END_OF_DAY || finish_hour < START_OF_DAY || finish_hour > END_OF_DAY || start_hour > finish_hour)
+    if (start_hour < START_OF_DAY || start_hour > END_OF_DAY || finish_hour < START_OF_DAY || finish_hour > END_OF_DAY || start_hour >= finish_hour)
         return true;
     return false;
 }
@@ -804,6 +817,57 @@ void update_salary_config(vector<SalaryConfig>& salary_configs)
 
 }
 
+bool Employee :: is_new_working_interval_invalid(int day, int start_period, int finish_period)
+{
+    for (auto working_interval : this->working_hours)
+        if (working_interval.does_working_interval_interfere(day, start_period, finish_period))
+            return true;
+    return false;
+}
+
+bool is_day_valid(int day)
+{
+    if(day >= START_OF_MONTH && day <= END_OF_MONTH)
+        return true;
+    return false;
+}
+
+void Employee :: add_working_hours(int day, int start_period, int finish_period)
+{
+    pair<int, int> new_working_interval;
+    new_working_interval.first = start_period;
+    new_working_interval.second = finish_period;
+    WorkingHour new_working_hour(day, new_working_interval);
+    working_hours.push_back(new_working_hour);
+}
+
+void add_working_hours(vector<Employee>& employees)
+{
+    int employee_id;
+    int day;
+    int start_period;
+    int finish_period;
+    cin >> employee_id >> day >> start_period >> finish_period;
+    int employee_index = find_employee_index(employee_id, employees);
+    if (employee_index == NOT_FOUND)
+    {
+        cout << "EMPLOYEE_NOT_FOUND" << endl;
+        return;
+    }
+    if ((!(is_day_valid(day))) || is_start_and_finish_hour_invalid(start_period, finish_period))
+    {
+        cout << "INVALID_ARGUMENTS" << endl;
+        return;
+    }
+    if (employees[employee_index].is_new_working_interval_invalid(day, start_period, finish_period))
+    {
+        cout << "INVALID_INTERVAL" <<endl;
+        return;
+    }
+    employees[employee_index].add_working_hours(day, start_period, finish_period);
+    cout << "OK" << endl;
+}
+
 void get_order(vector<Employee>& employees, vector<Team>& teams, vector<SalaryConfig>& salary_configs)
 {
     string order;
@@ -822,6 +886,8 @@ void get_order(vector<Employee>& employees, vector<Team>& teams, vector<SalaryCo
             show_salary_config(salary_configs);
         else if (order == "update_salary_config")
             update_salary_config(salary_configs);
+        else if (order == "add_working_hours")
+            add_working_hours(employees);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
