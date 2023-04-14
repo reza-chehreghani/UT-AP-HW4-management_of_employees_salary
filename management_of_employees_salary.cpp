@@ -8,9 +8,15 @@
 #include <cmath>
 #include <cstdlib>
 #include <set>
+#include <iomanip>
 
 using namespace std;
 
+const int START_OF_MONTH = 1;
+const int MONTH_DAYS_COUNT = 30;
+const int END_OF_MONTH = 30;
+const int START_OF_DAY = 0;
+const int END_OF_DAY = 24;
 const int NOT_FOUND = -1;
 const int NUMBER_OF_ENTRY_POINTED_TO_NAME_OF_THE_FILES_FOLDER = 1, NUMBER_OF_MONTH_DAYS = 30;
 const string EMPLOYEES_FILE_NAME = "employees.csv", WORKING_HOURS_FILE_NAME = "working_hours.csv",
@@ -43,6 +49,12 @@ public:
     WorkingHour(int day, pair<int, int> working_invertal);
     int get_day() { return day; }
     int calculate_lenght_of_working_invertal() { return (working_invertal.second - working_invertal.first); }
+    bool is_time_between_invertal(int time)
+    {
+        if (time >= working_invertal.first && (time + 1) <= working_invertal.second)
+            return true;
+        return false;
+    }
     bool is_day_this_day(int _day)
     {
         if (_day == day)
@@ -134,6 +146,7 @@ public:
     string level_to_string(Level level);
     int give_team_id(vector<Team> teams);
     int find_working_hours_in_a_day(int day);
+    int find_work_in_a_perid_day_count(int start_of_period);
 };
 
 Employee::Employee(int _id, string _name, int _age, Level _level, vector<WorkingHour> _working_hours)
@@ -441,7 +454,7 @@ void Employee::report_salary_long(vector<SalaryConfig> &salary_configs, int team
     cout << "ID: " << id << endl;
     cout << "Name: " << name << endl;
     cout << "Age: " << age << endl;
-    cout << "Level: " << level_to_string(level);
+    cout << "Level: " << level_to_string(level) << endl;;
     if (team_id == NOT_FOUND)
         cout << "Team ID: " << "N/A" << endl;
     else
@@ -492,7 +505,7 @@ void Team :: print_head_info(vector<Employee>& employees)
     for (auto employee : employees)
     {
         if (employee.is_id_for_this_employee(team_head_id))
-            cout << "Name : " << employee.get_name() << endl;
+            cout << "Head Name : " << employee.get_name() << endl;
     }
 }
 
@@ -563,12 +576,12 @@ void report_team_salary(vector<Employee>& employees, vector<SalaryConfig>& salar
     return total_hours;
  }
 
-vector<pair<int, int>> print_days_total_hour(int start_day, int finish_day, vector<Employee>& employees)
+vector<pair<int, float>> print_days_total_hour(int start_day, int finish_day, vector<Employee>& employees)
 {
-    vector<pair<int, int>> each_day_total_hours;
+    vector<pair<int, float>> each_day_total_hours;
     for (int day = start_day; day <= finish_day; day++)
     {
-        pair<int, int> this_day;
+        pair<int, float> this_day;
         int total_hours = 0;
         for (auto employee : employees)
             total_hours += employee.find_working_hours_in_a_day(day);
@@ -582,46 +595,60 @@ vector<pair<int, int>> print_days_total_hour(int start_day, int finish_day, vect
 
 }
 
-vector<pair<int, int>> find_most_hours_days(vector<pair<int, int>> all_days)
+vector<pair<int, float>> find_max_by_secend_of_pair(vector<pair<int, float>> all_of_list)
 {
-    vector<pair<int, int>> most_hours_days;
-    if (all_days.size() == 0)
-        return all_days;
-    pair<int, int> most_hour_day = all_days[0];
-    most_hours_days.push_back(most_hour_day);
-    for(int i = 1; i < all_days.size(); i++)
+    vector<pair<int, float>> max_members_list;
+    if (all_of_list.size() == 0)
+        return all_of_list;
+    pair<int, float> max_member_of_list = all_of_list[0];
+    max_members_list.push_back(max_member_of_list);
+    for(int i = 1; i < all_of_list.size(); i++)
     {
-        if (all_days[i].second == most_hour_day.second)
-            most_hours_days.push_back(all_days[i]);
-        else if (all_days[i].second > most_hour_day.second)
+        if (all_of_list[i].second == max_member_of_list.second)
+            max_members_list.push_back(all_of_list[i]);
+        else if (all_of_list[i].second > max_member_of_list.second)
         {
-            most_hours_days.clear();
-            most_hours_days.push_back(all_days[i]);
-            most_hour_day = all_days[i];
+            max_members_list.clear();
+            max_members_list.push_back(all_of_list[i]);
+            max_member_of_list = all_of_list[i];
         }
     }
-    return most_hours_days;
+    return max_members_list;
 }
 
-vector<pair<int, int>> find_least_hours_days(vector<pair<int, int>> all_days)
+vector<pair<int, float>> find_min_by_second_of_pair(vector<pair<int, float>> all_of_list)
 {
-    vector<pair<int, int>> least_hours_days;
-    if (all_days.size() == 0)
-        return all_days;
-    pair<int, int> least_hour_day = all_days[0];
-    least_hours_days.push_back(least_hour_day);
-    for(int i = 1; i < all_days.size(); i++)
+    vector<pair<int, float>> min_members_list;
+    if (all_of_list.size() == 0)
+        return all_of_list;
+    pair<int, float> min_of_list = all_of_list[0];
+    min_members_list.push_back(min_of_list);
+    for(int i = 1; i < all_of_list.size(); i++)
     {
-        if (all_days[i].second == least_hour_day.second)
-            least_hours_days.push_back(all_days[i]);
-        else if (all_days[i].second < least_hour_day.second)
+        if (all_of_list[i].second == min_of_list.second)
+            min_members_list.push_back(all_of_list[i]);
+        else if (all_of_list[i].second < min_of_list.second)
         {
-            least_hours_days.clear();
-            least_hours_days.push_back(all_days[i]);
-            least_hour_day = all_days[i];
+            min_members_list.clear();
+            min_members_list.push_back(all_of_list[i]);
+            min_of_list = all_of_list[i];
         }
     }
-    return least_hours_days;
+    return min_members_list;
+}
+
+bool is_start_and_finish_month_valid(int start_day, int finish_day)
+{
+    if (start_day < START_OF_MONTH || start_day > END_OF_MONTH || finish_day < START_OF_MONTH || finish_day > END_OF_MONTH || start_day > finish_day)
+        return true;
+    return false;
+}
+
+bool is_start_and_finish_hour_valid(int start_hour, int finish_hour)
+{
+    if (start_hour < START_OF_DAY || start_hour > END_OF_DAY || finish_hour < START_OF_DAY || finish_hour > END_OF_DAY || start_hour > finish_hour)
+        return true;
+    return false;
 }
 
 void report_total_hours_per_day(vector<Employee>& employees)
@@ -629,16 +656,73 @@ void report_total_hours_per_day(vector<Employee>& employees)
     int start_day;
     int finish_day;
     cin >> start_day >> finish_day;
-    vector<pair<int, int>> each_day_total_hours = print_days_total_hour(start_day, finish_day, employees);
-    vector<pair<int, int>> most_hours_days = find_most_hours_days(each_day_total_hours);
+    if (is_start_and_finish_month_valid(start_day, finish_day))
+    {
+        cout << "INVALID_ARGUMENTS" << endl;
+        return;
+    }
+    vector<pair<int, float>> each_day_total_hours = print_days_total_hour(start_day, finish_day, employees);
+    vector<pair<int, float>> most_hours_days = find_max_by_secend_of_pair(each_day_total_hours);
     cout << "Day(s) with Max Working Hours: ";
     for (auto day : most_hours_days)
         cout << day.first << " ";
     cout << endl;
-    vector<pair<int, int>> least_hours_days = find_least_hours_days(each_day_total_hours);
+    vector<pair<int, float>> least_hours_days = find_min_by_second_of_pair(each_day_total_hours);
     cout << "Day(s) with Min Working Hours: ";
     for (auto day : least_hours_days)
         cout << day.first << " ";
+    cout << endl;
+}
+
+int Employee :: find_work_in_a_perid_day_count(int start_of_period)
+{
+    int day_count = 0;
+    for (auto working_hour : working_hours)
+        if (working_hour.is_time_between_invertal(start_of_period))
+            day_count++;
+    return day_count;
+}
+
+vector<pair<int, float>> print_avg_working_employee(int start_hour, int finish_hour, vector<Employee>& employees)
+{
+    vector<pair<int, float>> each_hour_avg;
+    for(int start_period = start_hour; start_period < finish_hour; start_period++)
+    {
+        pair<int, float> this_hour;
+        float total_working_days = 0;
+        for (auto employee : employees)
+            total_working_days += employee.find_work_in_a_perid_day_count(start_period);
+        this_hour.first = start_period;
+        this_hour.second = total_working_days / MONTH_DAYS_COUNT;
+        each_hour_avg.push_back(this_hour);
+        cout << std::fixed;
+        cout << std::setprecision(1);
+        cout << start_period << "-" << start_period + 1 << ": " << this_hour.second << endl;
+    }
+    cout << "---" << endl;
+    return each_hour_avg;
+}
+
+void report_employee_per_hour(vector<Employee>& employees)
+{
+    int start_hour;
+    int finish_hour;
+    cin >> start_hour >> finish_hour;
+    if (is_start_and_finish_hour_valid(start_hour, finish_hour))
+    {
+        cout << "INVALID_ARGUMENTS" <<endl;
+        return;
+    }
+    vector<pair<int, float>> each_day_total_hours = print_avg_working_employee(start_hour, finish_hour, employees);
+    vector<pair<int, float>> max_avg_periods = find_max_by_secend_of_pair(each_day_total_hours);
+    vector<pair<int, float>> min_avg_periods = find_min_by_second_of_pair(each_day_total_hours);
+    cout << "Period(s) with Max Working Employees: ";
+    for (auto max_avg_period : max_avg_periods)
+        cout << max_avg_period.first << "-" << max_avg_period.first + 1 << " ";
+    cout << endl;
+    cout << "Period(s) with Min Working Employees: ";
+    for (auto min_avg_period : min_avg_periods)
+        cout << min_avg_period.first << "-" << min_avg_period.first + 1 << " ";
     cout << endl;
 }
 
@@ -654,6 +738,8 @@ void get_order(vector<Employee> employees, vector<Team> teams, vector<SalaryConf
             report_team_salary(employees, salary_configs, teams);
         else if (order == "report_total_hours_per_day")
             report_total_hours_per_day(employees);
+        else if (order == "report_employee_per_hour")
+            report_employee_per_hour(employees);
         else
             exit(EXIT_FAILURE); ////////////**********شاید باید پیغامی بدم
 }
