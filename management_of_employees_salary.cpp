@@ -307,7 +307,7 @@ vector<SalaryConfig> get_salary_configs(const string salary_configs_file_directo
 
 float SalaryConfig::calculate_tax(float salary, float bonus)
 {
-    return (salary + bonus) * tax_percentage / 100;
+    return (round(salary) + round(bonus)) * tax_percentage / 100;
 }
 
 float Employee::calculate_bonus(int bonus_percentage)
@@ -691,6 +691,14 @@ void show_max_and_min_working_employees_periods(vector<int> periods_with_max_wor
     cout << endl;
 }
 
+vector<int> divide_vector(vector<int> divideds, int divisor)
+{
+    vector<int> ans_numbers (divideds.size());
+    for (int index = 0; index < divideds.size(); index++)
+        ans_numbers[index] = (int)round((float)divideds[index] / divisor);
+    return ans_numbers;
+}
+
 void report_employee_per_hour(const vector<Employee> &employees)
 {
     int start_hour, finish_hour;
@@ -702,8 +710,9 @@ void report_employee_per_hour(const vector<Employee> &employees)
     }
     vector<int> periods_total_hours = calculate_employee_per_hour(start_hour, finish_hour, employees);
     show_employee_per_hour(start_hour, periods_total_hours);
-    vector<int> periods_with_max_working_employees = find_max_numbers(start_hour, periods_total_hours);
-    vector<int> periods_with_min_working_employees = find_min_numbers(start_hour, periods_total_hours);
+    vector<int> average_periods_total_hours = divide_vector(periods_total_hours, MONTH_DAYS_COUNT);
+    vector<int> periods_with_max_working_employees = find_max_numbers(start_hour, average_periods_total_hours);
+    vector<int> periods_with_min_working_employees = find_min_numbers(start_hour, average_periods_total_hours);
     show_max_and_min_working_employees_periods(periods_with_max_working_employees, periods_with_min_working_employees);
 }
 
