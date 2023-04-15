@@ -118,7 +118,7 @@ public:
     SalaryConfig(Level level, int base_salary, int salary_per_hour, int salaty_per_extra_hour,
                  int official_working_hours, int tax_percentage);
     // int calculate_total_earing(float salary, int bonus);
-    int calculate_tax(float salary, int bonus);
+    float calculate_tax(float salary, float bonus);
     float calculate_salary(int working_hours);
     int get_tax_percentage() { return tax_percentage; }
     void show_details();
@@ -149,7 +149,6 @@ public:
     Level get_level() { return level; }
     int calculate_total_working_hour();
     int calculate_absent_days();
-    int calculate_total_earing_straight(vector<SalaryConfig> &salary_configs){return calculate_total_earing(salary_configs[level].calculate_tax(salary, bonus));}
     void report_salary_short(vector<SalaryConfig> &salary_configs);
     void preparing_for_report_salary(vector<Team> &teams, vector<SalaryConfig> &salary_configs);
     int calculate_total_earing(float tax);
@@ -158,7 +157,7 @@ public:
         salary = _salary;
         return _salary;
     }
-    float calculate_and_set_bonus(int bonus_percentage);
+    float calculate_bonus(int bonus_percentage);
     int find_emoloyee_team_index(vector<Team> &teams);
     void report_salary_long(vector<SalaryConfig> &salary_configs, int team_id);
     string level_to_string(Level level);
@@ -309,11 +308,9 @@ vector<SalaryConfig> get_salary_configs(const string salary_configs_file_directo
     return salary_configs;
 }
 
-int SalaryConfig::calculate_tax(float salary, int bonus)
+float SalaryConfig::calculate_tax(float salary, float bonus)
 {
-    salary += salary * bonus / 100;
-    float tax = salary * tax_percentage / 100;
-    return round(tax);
+    return (salary + bonus) * tax_percentage / 100;
 }
 // int SalaryConfig::calculate_total_earing(float salary, int bonus)
 // {
@@ -322,7 +319,7 @@ int SalaryConfig::calculate_tax(float salary, int bonus)
 //     return round(salary);
 // }
 
-float Employee::calculate_and_set_bonus(int bonus_percentage)
+float Employee::calculate_bonus(int bonus_percentage)
 {
     bonus = salary * bonus_percentage / 100;
     return bonus;
@@ -418,7 +415,7 @@ void report_salaries(const vector<Employee> &employees, vector<Team> &teams, vec
 void Employee::preparing_for_report_salary(vector<Team> &teams, vector<SalaryConfig> &salary_configs)
 {
     salary = salary_configs[level].calculate_salary(calculate_total_working_hour());
-    bonus = calculate_and_set_bonus(teams[find_emoloyee_team_index(teams)].get_bonus_percentage());
+    bonus = calculate_bonus(teams[find_emoloyee_team_index(teams)].get_bonus_percentage());
 }
 
 int find_employee_index(int id, vector<Employee> &employees)
@@ -488,10 +485,10 @@ void Employee::report_salary_long(vector<SalaryConfig> &salary_configs, int team
         cout << "Team ID: " << team_id << endl;
     cout << "Total Working Hours: " << calculate_total_working_hour() << endl;
     cout << "Absent Days: " << calculate_absent_days() << endl;
-    cout << "Salary: " << salary << endl;
-    cout << "Bonus: " << bonus << endl;
+    cout << "Salary: " << (int)round(salary) << endl;
+    cout << "Bonus: " << (int)round(bonus) << endl;
     float tax = salary_configs[level].calculate_tax(salary, bonus);
-    cout << "Tax: " << tax << endl;
+    cout << "Tax: " << (int)round(tax) << endl;
     cout << "Total Earning: " << calculate_total_earing(tax) << endl;
 }
 
@@ -575,7 +572,7 @@ void Employee::report_salary_as_team_member(vector<Team> &teams, vector<SalaryCo
 {
     cout << "Member ID: " << id << endl;
     preparing_for_report_salary(teams, salary_configs);
-    cout << "Total Earning: " << calculate_total_earing_straight(salary_configs) << endl;
+    cout << "Total Earning: " << calculate_total_earing(salary_configs[level].calculate_tax(salary, bonus)) << endl;
     cout << "---" << endl;
 }
 
@@ -622,7 +619,7 @@ void Team::report_salary(vector<Employee> &employees, vector<Team> &teams, vecto
     cout << "Head Name: " << find_head_name(employees) << endl;
     int total_working_hours = find_total_working_hours(employees);
     cout << "Team Total Working Hours: " << total_working_hours << endl;
-    cout << "Average Member Working Hour: ";
+    cout << "Average Member Working Hours: ";
     show_round_to_one_decimal_place((float)total_working_hours / get_number_of_team_members()); 
     cout << endl;
     cout << "Bonus: " << bonus_percentage << endl;
@@ -776,13 +773,13 @@ bool is_start_and_finish_day_of_month_invalid(int start_day, int finish_day)
 
 void show_max_and_min_days_working_hours(vector<int> max_days_working_hours, vector<int> min_days_working_hours)
 {
-    cout << "Day(s) with Max Working Hours: ";
+    cout << "Day(s) with Max Working Hours:";
     for (auto max_day_working_hours : max_days_working_hours)
-        cout << max_day_working_hours << " ";
+        cout << " " << max_day_working_hours;
     cout << endl;
-    cout << "Day(s) with Min Working Hours: ";
+    cout << "Day(s) with Min Working Hours:";
     for (auto min_day_working_hours : min_days_working_hours)
-        cout << min_day_working_hours << " ";
+        cout << " " << min_day_working_hours;
     cout << endl;
 }
 
@@ -882,13 +879,13 @@ void show_employee_per_hour(int start_hour, vector<int> periods_total_hours)
 
 void show_max_and_min_working_employees_periods(vector<int> periods_with_max_working_employees, vector<int> periods_with_min_working_employees)
 {
-    cout << "Period(s) with Max Working Employees: ";
+    cout << "Period(s) with Max Working Employees:";
     for (auto max_period : periods_with_max_working_employees)
-        cout << max_period << "-" << max_period + 1 << " ";
+        cout << " " << max_period << "-" << max_period + 1;
     cout << endl;
-    cout << "Period(s) with Min Working Employees: ";
+    cout << "Period(s) with Min Working Employees:";
     for (auto min_period : periods_with_min_working_employees)
-        cout << min_period << "-" << min_period + 1 << " ";
+        cout << " " << min_period << "-" << min_period + 1;
     cout << endl;
 }
 
@@ -997,6 +994,7 @@ void Employee :: add_working_hours(int day, int start_period, int finish_period)
         return;
     }
     working_hours.push_back(WorkingHour(day, {start_period, finish_period}));
+    cout << "OK" << endl;
 }
 
 void add_working_hours(vector<Employee>& employees)
@@ -1015,7 +1013,6 @@ void add_working_hours(vector<Employee>& employees)
         return;
     }
     employees[employee_index].add_working_hours(day, start_period, finish_period);
-    cout << "OK" << endl;
 }
 
 void Employee::delete_working_hours(int day)
@@ -1098,7 +1095,7 @@ void get_order(vector<Employee>& employees, vector<Team>& teams, vector<SalaryCo
 
 int main(int argc, char *argv[])
 {
-    const string files_directory = "./assets/"; // set_folder_of_files_directory(argv[NUMBER_OF_ENTRY_POINTED_TO_NAME_OF_THE_FILES_FOLDER]);
+    const string files_directory = set_folder_of_files_directory(argv[NUMBER_OF_ENTRY_POINTED_TO_NAME_OF_THE_FILES_FOLDER]);
     vector<Employee> employees = get_employees_and_working_hours(files_directory + EMPLOYEES_FILE_NAME,
                                                                  files_directory + WORKING_HOURS_FILE_NAME);
     vector<Team> teams = get_teams(files_directory + TEAMS_FILE_NAME);
