@@ -323,7 +323,7 @@ float Employee::calculate_bonus(int bonus_percentage)
 int Employee::calculate_total_earing(float tax)
 {
 
-    return round(salary + bonus - tax);
+    return round(salary) + round(bonus) - round(tax);
 }
 
 float SalaryConfig::calculate_salary(int total_working_hours)
