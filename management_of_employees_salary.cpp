@@ -184,10 +184,6 @@ SalaryConfig::SalaryConfig(Level _level, int _base_salary, int _salary_per_hour,
     : level(_level), base_salary(_base_salary), salary_per_hour(_salary_per_hour), salary_per_extra_hour(_salaty_per_extra_hour),
       official_working_hours(_official_working_hours), tax_percentage(_tax_percentage) {}
 
-string delete_bachslash_r_if_it_was_at_the_end_of_the_word(string word)
-{
-    return (word.back() == '\r') ? word.substr(0, word.size() - 1) : word;
-}
 vector<string> split_line_of_string_by_specific_char(string line_string, char specific_char)
 {
     istringstream line_stream(line_string);
@@ -195,7 +191,6 @@ vector<string> split_line_of_string_by_specific_char(string line_string, char sp
     string word;
     while (getline(line_stream, word, specific_char))
         fields.push_back(word);
-    fields.back() = delete_bachslash_r_if_it_was_at_the_end_of_the_word(fields.back());
     return fields;
 }
 pair<int, int> convert_string_to_invertal(string str)
@@ -251,6 +246,9 @@ vector<Employee> get_employees_and_working_hours(const string employees_file_dir
     while (getline(employees_csv, line))
         employees.push_back(convert_csv_line_to_employee(line, working_hours_file_directory));
     employees_csv.close();
+    sort(employees.begin(), employees.end(),
+         [](Employee &left, Employee &right)
+         { return (left.get_id() < right.get_id()); });
     return employees;
 }
 string set_folder_of_files_directory(string folder_name)
@@ -268,8 +266,9 @@ vector<int> convert_vector_string_to_vector_int(vector<string> numbers_str)
 Team convert_csv_line_to_team(string csv_line)
 {
     vector<string> csv_fields = split_line_of_string_by_specific_char(csv_line, COMMA);
-    vector<string> member_ids_str = split_line_of_string_by_specific_char(csv_fields[2], DOLLAR);
-    return Team(stoi(csv_fields[0]), stoi(csv_fields[1]), convert_vector_string_to_vector_int(member_ids_str),
+    vector<int> member_ids = convert_vector_string_to_vector_int(split_line_of_string_by_specific_char(csv_fields[2], DOLLAR));
+    sort(member_ids.begin(), member_ids.end());
+    return Team(stoi(csv_fields[0]), stoi(csv_fields[1]), member_ids,
                 stoi(csv_fields[3]), stof(csv_fields[4]));
 }
 vector<Team> get_teams(const string teams_file_directory)
@@ -281,6 +280,9 @@ vector<Team> get_teams(const string teams_file_directory)
     while (getline(teams_csv, line))
         teams.push_back(convert_csv_line_to_team(line));
     teams_csv.close();
+    sort(teams.begin(), teams.end(),
+         [](Team &left, Team &right)
+         { return (left.get_team_id() < right.get_team_id()); });
     return teams;
 }
 SalaryConfig convert_csv_line_to_salary_config(string csv_line)
@@ -693,7 +695,7 @@ void show_max_and_min_working_employees_periods(vector<int> periods_with_max_wor
 
 vector<int> divide_vector(vector<int> divideds, int divisor)
 {
-    vector<int> ans_numbers (divideds.size());
+    vector<int> ans_numbers(divideds.size());
     for (int index = 0; index < divideds.size(); index++)
         ans_numbers[index] = (int)round((float)divideds[index] / divisor);
     return ans_numbers;
