@@ -915,6 +915,11 @@ pair<int, int> Team::check_for_bonus(vector<Employee> &employees)
 
 void show_teams_for_bonus(vector<pair<int, int>> teams_for_bonus)
 {
+    if (teams_for_bonus.size() == 0)
+    {
+        cout << "NO_BONUS_TEAMS" << endl;
+        return;
+    }
     for (auto team_for_bonus : teams_for_bonus)
         cout << "Team ID: " << team_for_bonus.first << endl;
 }
