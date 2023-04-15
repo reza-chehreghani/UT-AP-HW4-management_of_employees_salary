@@ -103,6 +103,8 @@ public:
     }
     void report_salary(vector<Employee> &employees, vector<Team> &teams, vector<SalaryConfig> &salary_configs);
     void update_team_bonus(int new_bonus_percentage) { bonus_percentage = new_bonus_percentage; }
+    pair<int, int> check_for_bonus(vector<Employee> &employees);
+    vector<int> calcutlat_members_total_working_hours(vector<Employee> &employees);
 };
 class SalaryConfig
 {
@@ -876,6 +878,62 @@ void update_team_bonus(vector<Team> &teams)
     cout << "OK" << endl;
 }
 
+vector<int> Team::calcutlat_members_total_working_hours(vector<Employee> &employees)
+{
+    vector<int> members_total_working_hours;
+    for (auto employee : employees)
+        if (is_id_in_team(employee.get_id()))
+            members_total_working_hours.push_back(employee.calculate_total_working_hour());
+    return members_total_working_hours;
+}
+
+int sum_vector(vector<int> numbers)
+{
+    int sum = 0;
+    for (auto number : numbers)
+        sum += number;
+    return sum;
+}
+
+float variance_vector(vector<int> numbers, float average)
+{
+    float sum_power_two = 0;
+    for (int i = 0; i < numbers.size(); i++)
+        sum_power_two += (numbers[i] - average) * (numbers[i] - average);
+    return sum_power_two / numbers.size();
+}
+
+pair<int, int> Team::check_for_bonus(vector<Employee> &employees)
+{
+    vector<int> members_working_hours = calcutlat_members_total_working_hours(employees);
+    int sum_members_working_hours = sum_vector(members_working_hours);
+    float variance_members_working_hours = variance_vector(members_working_hours, (float)sum_members_working_hours / get_number_of_team_members());
+    if (sum_members_working_hours > bonus_min_working_hours && variance_members_working_hours < bonus_working_hours_max_variance)
+        return {team_id, sum_members_working_hours};
+    return {NOT_FOUND, NOT_FOUND};
+}
+
+void show_teams_for_bonus(vector<pair<int, int>> teams_for_bonus)
+{
+    for (auto team_for_bonus : teams_for_bonus)
+        cout << "Team ID: " << team_for_bonus.first << endl;
+}
+
+void find_teams_for_bonus(vector<Employee> &employees, vector<Team> &teams)
+{
+    vector<pair<int, int>> teams_for_bonus;
+    for (auto team : teams)
+    {
+        pair<int, int> team_for_bonus = team.check_for_bonus(employees);
+        if (team_for_bonus.first != NOT_FOUND)
+            teams_for_bonus.push_back(team_for_bonus);
+    }
+    sort(teams_for_bonus.begin(), teams_for_bonus.end(),
+         [](const pair<int, int> &left, const pair<int, int> &right)
+         { return (left.second < right.second); });
+    show_teams_for_bonus(teams_for_bonus);
+}
+
 void get_order(vector<Employee> &employees, vector<Team> &teams, vector<SalaryConfig> &salary_configs)
 {
     string order;
@@ -900,6 +958,8 @@ void get_order(vector<Employee> &employees, vector<Team> &teams, vector<SalaryCo
             delete_working_hours(employees);
         else if (order == "update_team_bonus")
             update_team_bonus(teams);
+        else if (order == "find_teams_for_bonus")
+            find_teams_for_bonus(employees, teams);
         else
             exit(EXIT_FAILURE);
 }
