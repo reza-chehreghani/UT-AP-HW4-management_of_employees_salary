@@ -322,7 +322,6 @@ float Employee::calculate_bonus(int bonus_percentage)
 
 int Employee::calculate_total_earing(float tax)
 {
-
     return round(salary) + round(bonus) - round(tax);
 }
 
@@ -384,7 +383,10 @@ void report_salaries(const vector<Employee> &employees, vector<Team> &teams, vec
 void Employee::preparing_for_report_salary(vector<Team> &teams, vector<SalaryConfig> &salary_configs)
 {
     salary = salary_configs[level].calculate_salary(calculate_total_working_hour());
-    bonus = calculate_bonus(teams[find_emoloyee_team_index(teams)].get_bonus_percentage());
+    int employee_team_index = find_emoloyee_team_index(teams);
+    if (employee_team_index == NOT_FOUND)
+        return;
+    bonus = calculate_bonus(teams[employee_team_index].get_bonus_percentage());
 }
 
 int find_employee_index(int id, vector<Employee> &employees)
@@ -699,7 +701,7 @@ vector<int> divide_vector(vector<int> divideds, int divisor)
 {
     vector<int> ans_numbers(divideds.size());
     for (int index = 0; index < divideds.size(); index++)
-        ans_numbers[index] = (int)round((float)divideds[index] / divisor);
+        ans_numbers[index] = (int)round((float)10 * divideds[index] / divisor);
     return ans_numbers;
 }
 
@@ -778,6 +780,7 @@ void update_salary_config(vector<SalaryConfig> &salary_configs)
     cin >> str_level;
     if (!(is_level_valid(str_level)))
     {
+        getline(cin, str_level);
         cout << "INVALID_LEVEL" << endl;
         return;
     }
